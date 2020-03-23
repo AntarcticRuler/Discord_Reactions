@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+
+<head>
+    <link rel="stylesheet" href="https://dhbhdrzi4tiry.cloudfront.net/cdn/sites/foundation.min.css">
+</head>
+
+<body> 
+
+  <div id="servers">
+    
+  </div>
+
+  <div id=serverInfo>
+  
+  </div>
+
+</body>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://dhbhdrzi4tiry.cloudfront.net/cdn/sites/foundation.js"></script>
+<script>
+    $(document).foundation();
+
+    // var code = localStorage.getItem('key');
+
+    // if (!window.location.href.split('code=')[1] && (code == undefined || code == 'undefined'))
+    //   window.location.href = "./rxns/auth";
+    // else 
+    //   localStorage.setItem('key', window.location.href.split('code=')[1]);
+
+    // code = localStorage.getItem('key');
+    // console.log (code);
+
+    var data = $.get( "./rxns/data", function( data ) { 
+
+      let servers = document.getElementById("servers");
+
+      data.forEach(element => {
+        let server = document.createElement('div')
+        server.innerHTML = element.name;
+        server.onclick = function () { clickServer(element) };
+        servers.appendChild(server);
+      });
+
+    });
+
+    function clickServer (element) {
+
+      $.get( "./rxns/rxnsExisting", function( data ) { 
+
+        console.log (data);
+
+        console.log (`${element.name} clicked!`);
+        var info = document.getElementById('serverInfo');
+        info.innerHTML = `<h3>${element.name}</h3> <img src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}"> 
+                          <br><br> 
+                          <input type="text" id="url" name="url" placeholder="URL">
+                          <br>
+                          <input type="text" id="name" name="name" placeholder="Name">
+                          <input type="submit" value="Submit" onclick=submit(${element.id})>`
+        if (data[`${element.id}`])
+          info.innerHTML += `<h5>${server}</h5>`;
+
+      });
+    }
+
+    function submit (serverID) {
+      let url = document.getElementById('url').value
+      let name = document.getElementById('name').value
+      
+      $.post('/rxns/add', { server: serverID, url: url, name: name },  )
+      console.log (`ATTEMPTING TO ADD ${url} UNDER NAME ${name}`)
+    }
+</script>
+
