@@ -185,7 +185,19 @@ client.on("message", message => {
   let msg = message.content.toLowerCase();
 
   if (msg.startsWith(`${prefix}help`)) {
-    message.channel.send (new Discord.RichEmbed().setDescription(`http://www.nick-studios.com/rxns`));
+    message.channel.send (new Discord.RichEmbed().setDescription(`http://www.nick-studios.com/rxns/auth`));
+  }
+
+  // Changes the bot's username
+  if (msg.startsWith(`${prefix}nick`) || msg.startsWith(`${prefix}nickname`)) {
+    if (message.member.permissions.has('MANAGE_NICKNAMES') && message.guild.member(client.user.id).hasPermission('CHANGE_NICKNAME')) {
+      message.guild.member(client.user.id).setNickname(message.content.slice(msg.split(' ')[0].length));
+      message.channel.send (new Discord.RichEmbed().setDescription('Username Changed'))
+    }
+    else if (!message.member.hasPermission('MANAGE_NICKNAMES'))
+      message.channel.send (new Discord.RichEmbed().setDescription('You do not have manage nicknames permission'))
+    else
+      message.channel.send (new Discord.RichEmbed().setDescription('Error: The bot may not have nickname changing permissions'))
   }
 
   server_reactions.forEach ( server => {
@@ -195,7 +207,6 @@ client.on("message", message => {
           message.channel.send (reaction[1]);
       })
   })
-
 
 });
 
