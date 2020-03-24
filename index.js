@@ -191,8 +191,12 @@ client.on("message", message => {
   // Changes the bot's username
   if (msg.startsWith(`${prefix}nick`) || msg.startsWith(`${prefix}nickname`)) {
     if (message.member.permissions.has('MANAGE_NICKNAMES') && message.guild.member(client.user.id).hasPermission('CHANGE_NICKNAME')) {
-      message.guild.member(client.user.id).setNickname(message.content.slice(msg.split(' ')[0].length));
-      message.channel.send (new Discord.RichEmbed().setDescription('Username Changed'))
+      if (msg.split(' ')[1]) {
+        message.guild.member(client.user.id).setNickname(message.content.slice(msg.split(' ')[0].length));
+        message.channel.send (new Discord.RichEmbed().setDescription('Username Changed'))
+      }
+      else
+        message.channel.send (new Discord.RichEmbed().setDescription('Please enter a nickname'))
     }
     else if (!message.member.hasPermission('MANAGE_NICKNAMES'))
       message.channel.send (new Discord.RichEmbed().setDescription('You do not have manage nicknames permission'))
@@ -200,6 +204,7 @@ client.on("message", message => {
       message.channel.send (new Discord.RichEmbed().setDescription('Error: The bot may not have nickname changing permissions'))
   }
 
+  // The meat of the code: for every server it checks if there is an applicable reaction to be sent :)
   server_reactions.forEach ( server => {
     if (server.id == message.guild.id)
       Object.entries(server.reactions).forEach ( reaction => {

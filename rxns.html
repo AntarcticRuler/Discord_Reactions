@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 
 <head>
-    <link rel="stylesheet" href="https://dhbhdrzi4tiry.cloudfront.net/cdn/sites/foundation.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation-float.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/js/foundation.min.js"></script>
+    <link rel="stylesheet" href="./rxns.css">
 </head>
 
 <body> 
 
-  <div id="servers">
+  <div class="row"> 
+    <h3 class="text-center"> Your Servers </h3>
+  </div>
+  <div id="servers" class="row align-center">
     
   </div>
 
   <div id=serverInfo>
-  
+
   </div>
 
 </body>
@@ -38,12 +45,18 @@
 
       let servers = document.getElementById("servers");
 
+      let count = 0;
+
+      data.forEach( () => { count++ })
+
       data.forEach(element => {
-        let server = document.createElement('div')
+        let server = document.createElement('h5')
         server.innerHTML = element.name;
         server.onclick = function () { clickServer(element) };
+        server.classList.add ('columns');
+        server.classList.add ('text-center');
+        server.style.maxWidth = `${100/count}%`
         servers.appendChild(server);
-        console.log (element)
       });
 
     });
@@ -69,30 +82,60 @@
 
         // Adds the info about the server
         if (existing) {
-          info.innerHTML = `<h3>${element.name}</h3> <img src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}"> 
-                          <br><br> 
-                          <input type="text" id="url" name="url" placeholder="Reaction">
+          info.innerHTML = `<h3 class="text-center">${element.name}</h3> <img  style="display:block;margin:auto;"" src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}"> 
                           <br>
-                          <input type="text" id="name" name="name" placeholder="Reaction Name">
-                          <input type="submit" value="Submit" onclick=submit()>
+                          <input style="margin:auto" class="text-center" type="text" id="url" name="url" placeholder="Reaction">
+                          <br>
+                          <input style="margin:auto" class="text-center" type="text" id="name" name="name" placeholder="Reaction Name">
+                          <br>
+                          <input style="display:block; margin:auto" class="text-center" type="submit" value="Submit" onclick=submit()>
                           <br><br>
-                          <h5>Current Reactions:</h5>` 
-          // Loops through all current servers to find the current one
-          server_data.forEach(curr_server => {
-            if (curr_server.id == serverID)
-              // Loops through and displays all reactions
-              Object.entries (curr_server.reactions).forEach ( reaction => {
-                console.log (reaction);
-                info.innerHTML += `<p>${reaction[0]} : ${reaction[1]}</p><br>`
-              } )
-          })
+                          <div class="row">
+                            <h5 class="columns small-3">Current Reactions:</h5> 
+                            <div class="columns small-9">
+                              <div class="row">
+                                ${getCurrReactions(server_data)}
+                              </div>
+                            </div>
+                          </div>`
         }
         else 
-          info.innerHTML = `<h3>${element.name}</h3> <img src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}"><br><br><h4><a href="https://discordapp.com/oauth2/authorize?client_id=688388524528893955&scope=bot&permissions=67488832" target="blank">Add RXNS to your server!</a><h4>`
+          info.innerHTML = `<h3 class="text-center">${element.name}</h3> <img  style="display:block;margin:auto;"" src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}">
+          <br>
+          <h4 class="text-center"><a href="https://discordapp.com/oauth2/authorize?client_id=688388524528893955&scope=bot&permissions=67488832" target="blank">
+            Add RXNS to your server!
+          </a><h4>`
 
         console.log (`${element.name} clicked!`);
 
       });
+    }
+
+    function getCurrReactions (server_data) {
+      let string = ``;
+      let count = 0;
+      // Loops through all current servers to find the current one
+      server_data.forEach(curr_server => {
+        if (curr_server.id == serverID) {
+          let reactions = Object.entries (curr_server.reactions);
+          reactions.forEach( () => { count++ }) // Gets a count of all the reactions for width purposes
+          // Loops through and displays all reactions
+          reactions.forEach ( reaction => {
+            console.log (reaction);
+            string += `<p class="columns small-12 medium-6 large-4">${shortenReactionName(reaction[0])} <strong>:</strong> ${shortenReactionName(reaction[1])}</p>`
+          } )
+          string += `</div> </div>`
+        }
+      })
+      return string;
+    }
+
+    function shortenReactionName (reaction) {
+      console.log (reaction);
+      console.log (`${reaction.substring(22, reaction.length)}...`);
+      if (reaction.length > 22)
+        return `${reaction.substring(22)}...`;
+      return reaction;
     }
 
     // Submits the data to the backend server
@@ -111,6 +154,7 @@
         data: JSON.stringify(data),
         success: function(data){
           console.log (data)
+          location.reload();
         }
       });
     }
