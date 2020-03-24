@@ -31,6 +31,9 @@
     // code = localStorage.getItem('key');
     // console.log (code);
 
+    var serverID; // The ID of the currently clicked server
+
+    // Adds all the user's servers to the screen to choose from
     var data = $.get( "./rxns/data", function( data ) { 
 
       let servers = document.getElementById("servers");
@@ -40,36 +43,75 @@
         server.innerHTML = element.name;
         server.onclick = function () { clickServer(element) };
         servers.appendChild(server);
+        console.log (element)
       });
 
     });
 
+    // Runs when a server is clicked on
     function clickServer (element) {
 
-      $.get( "./rxns/rxnsExisting", function( data ) { 
+      serverID = element.id;
+      
+      $.get( "./rxns/server_reactions", function( server_data ) { 
 
-        console.log (data);
+        let existing = false;
+        
+        // Checks to see if the server being clicked is on the list of added servers
+        server_data.forEach(curr_server => {
+          if (curr_server.id == serverID)
+            existing = true;
+        })
+
+        console.log (server_data);
+
+        var info = document.getElementById('serverInfo');
+
+        // Adds the info about the server
+        if (existing) {
+          info.innerHTML = `<h3>${element.name}</h3> <img src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}"> 
+                          <br><br> 
+                          <input type="text" id="url" name="url" placeholder="Reaction">
+                          <br>
+                          <input type="text" id="name" name="name" placeholder="Reaction Name">
+                          <input type="submit" value="Submit" onclick=submit()>
+                          <br><br>
+                          <h5>Current Reactions:</h5>` 
+          // Loops through all current servers to find the current one
+          server_data.forEach(curr_server => {
+            if (curr_server.id == serverID)
+              // Loops through and displays all reactions
+              Object.entries (curr_server.reactions).forEach ( reaction => {
+                console.log (reaction);
+                info.innerHTML += `<p>${reaction[0]} : ${reaction[1]}</p><br>`
+              } )
+          })
+        }
+        else 
+          info.innerHTML = `<h3>${element.name}</h3> <img src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}"><br><br><h4><a href="https://discordapp.com/oauth2/authorize?client_id=688388524528893955&scope=bot&permissions=67488832" target="blank">Add RXNS to your server!</a><h4>`
 
         console.log (`${element.name} clicked!`);
-        var info = document.getElementById('serverInfo');
-        info.innerHTML = `<h3>${element.name}</h3> <img src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}"> 
-                          <br><br> 
-                          <input type="text" id="url" name="url" placeholder="URL">
-                          <br>
-                          <input type="text" id="name" name="name" placeholder="Name">
-                          <input type="submit" value="Submit" onclick=submit(${element.id})>`
-        if (data[`${element.id}`])
-          info.innerHTML += `<h5>${server}</h5>`;
 
       });
     }
 
-    function submit (serverID) {
+    // Submits the data to the backend server
+    // Will add the reaction posted on the website
+    function submit () {
+      console.log ("ATTEMPTING TO SUBMIT");
       let url = document.getElementById('url').value
       let name = document.getElementById('name').value
-      
-      $.post('/rxns/add', { server: serverID, url: url, name: name },  )
-      console.log (`ATTEMPTING TO ADD ${url} UNDER NAME ${name}`)
+      let data = { server: serverID, url: url, name: name }
+      console.log (data);
+      $.ajax({
+        url: "/rxns/add",
+        type: "POST",
+        dataType: "json",
+        contentType : "application/json",
+        data: JSON.stringify(data),
+        success: function(data){
+          console.log (data)
+        }
+      });
     }
 </script>
-

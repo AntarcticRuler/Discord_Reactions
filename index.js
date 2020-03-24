@@ -60,18 +60,26 @@ passport.use(new DiscordStrategy(
         res.json(rxnsExisting)
         res.end();
       }) 
+      // Adds a reaction to a server
       app.post ('/rxns/add', function (req, res) {
-        console.log ("OWO SENPAI");
         console.log (req.body);
         addOne(req.body.server, req.body.name, req.body.url);
       })
+      // The route to retreive server_reactions
+      app.get('/rxns/server_reactions', function (req, res) {
+        res.json(server_reactions)
+        res.end();
+      })     
       // return callback
       return cb();
     });
   })
 );
+
+// Authenticates them
 app.get('/rxns/auth', passport.authenticate('discord'));
 
+// The callbeck for the authentication
 app.get('/rxns/auth/callback', passport.authenticate('discord', {
   failureRedirect: `http://www.nick-studios.com/rxns?token=${a_token}`
 }), function(req, res) {
@@ -124,23 +132,33 @@ client.on ("guildCreate", guild => {
   collection.insertOne(server, function(err, res) {
       if (err) throw err;
       console.log(guild.name + " ADDED");
+
+      collection.find ({}).toArray(function(err, res) {
+        server_reactions = res;
+      });
+
   });
 
 });
 
+// Adds a reaction to a server
 function addOne (serverID, name, url) {
 
   console.log (serverID);
 
+  // Finds the server to add the reaction to
   collection.find( { id: serverID.toString() }).toArray(function(err, res) {
     if (err) throw err;
     // Inserts the guild
 
+    // Adds the reaction
     res[0].reactions[name] = url
 
+    // Updates the server on the DB
     collection.updateOne( { id: serverID } , { $set: { reactions: res[0].reactions } } , function(err, res) {
         if (err) throw err;
 
+        // Updates the server_reactions on the server
         collection.find ({}).toArray(function(err, res) {
           server_reactions = res;
         });
@@ -167,7 +185,7 @@ client.on("message", message => {
   let msg = message.content.toLowerCase();
 
   if (msg.startsWith(`${prefix}help`)) {
-    message.channel.send (new Discord.RichEmbed().setDescription(`www.nick-studios.com/rxns`));
+    message.channel.send (new Discord.RichEmbed().setDescription(`http://www.nick-studios.com/rxns`));
   }
 
   server_reactions.forEach ( server => {
