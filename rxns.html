@@ -84,9 +84,9 @@
         if (existing) {
           info.innerHTML = `<h3 class="text-center">${element.name}</h3> <img  style="display:block;margin:auto;"" src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}"> 
                           <br>
-                          <input style="margin:auto" class="text-center" type="text" id="url" name="url" placeholder="Reaction">
-                          <br>
                           <input style="margin:auto" class="text-center" type="text" id="name" name="name" placeholder="Reaction Name">
+                          <br>
+                          <input style="margin:auto" class="text-center" type="text" id="url" name="url" placeholder="Reaction">
                           <br>
                           <input style="display:block; margin:auto" class="text-center" type="submit" value="Submit" onclick=submit()>
                           <br><br>
@@ -130,11 +130,12 @@
       return string;
     }
 
+    // Shortens the name of the reaction
     function shortenReactionName (reaction) {
-      console.log (reaction);
-      console.log (`${reaction.substring(22, reaction.length)}...`);
+      if (reaction.split ('https://')[1])
+        reaction = reaction.split ('https://')[1]
       if (reaction.length > 22)
-        return `${reaction.substring(22)}...`;
+        return `${reaction.substr(0, 22)}...`;
       return reaction;
     }
 
@@ -143,7 +144,7 @@
     function submit () {
       console.log ("ATTEMPTING TO SUBMIT");
       let url = document.getElementById('url').value
-      let name = document.getElementById('name').value
+      let name = document.getElementById('name').value.toLowerCase();
       let data = { server: serverID, url: url, name: name }
       console.log (data);
       $.ajax({
