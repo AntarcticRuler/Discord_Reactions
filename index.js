@@ -22,10 +22,13 @@ const oauth = new DiscordOauth2();
 
 var DiscordStrategy = require('passport-discord').Strategy;
 var passport = require('passport');
+app.use(passport.initialize());
 
 var a_token;
 
 var server_reactions;
+
+var rand = function() { return Math.random().toString(36).substr(2); };
 
 passport.use(new DiscordStrategy(
   {
@@ -37,33 +40,23 @@ passport.use(new DiscordStrategy(
   function(accessToken, refreshToken, profile, cb) {
   
     let data = []; // the data for all the partial guilds
-    let rxnsExisting = []; // the already existing servers
+    // let rxnsExisting = []; // the already existing servers
 
     a_token = accessToken; // the access token
     // gets all the users guilds
     oauth.getUserGuilds(accessToken).then(guilds => { 
+
+      let user_id;
+
+      oauth.getUser(accessToken).then(user => { user_id = user.id; })
+
       // loops through all the users guilds
       guilds.forEach(element => {
         // sees if the user owns the guild
-        if (element.owner) {
+        if (element.owner)
           data.push(element);
-          collection.findOne ( { id : element.id }, function(err, res) { rxnsExisting.push(res) } ) // pushes the already existing reactions
-        }
+          // collection.findOne ( { id : element.id }, function(err, res) { rxnsExisting.push(res) } ) // pushes the already existing reactions
         
-      })
-      // Creates the routes for data and rxnsExisting
-      app.get('/rxns/data', function (req, res) {
-        res.json(data)
-        res.end();
-      })     
-      app.get('/rxns/rxnsExisting', function (req, res) {
-        res.json(rxnsExisting)
-        res.end();
-      }) 
-      // Adds a reaction to a server
-      app.post ('/rxns/add', function (req, res) {
-        console.log (req.body);
-        addOne(req.body.server, req.body.name, req.body.url);
       })
       // The route to retreive server_reactions
       app.get('/rxns/server_reactions', function (req, res) {
@@ -71,19 +64,46 @@ passport.use(new DiscordStrategy(
         res.end();
       })     
       // return callback
-      return cb();
+      return cb( false, { data: data, user_id: user_id } );
     });
   })
 );
 
+// Im not 100% sure how this does it, but from what google tells me it creates a user-only session
+passport.serializeUser(function(user, done) {
+  console.log (user);
+  done(null, user);
+});
+passport.deserializeUser(function(user, done) {
+  console.log (user);
+  done(null, user);
+});
+
 // Authenticates them
 app.get('/rxns/auth', passport.authenticate('discord'));
 
-// The callbeck for the authentication
-app.get('/rxns/auth/callback', passport.authenticate('discord', {
-  failureRedirect: `http://www.nick-studios.com/rxns?token=${a_token}`
+// The callback for the authentication
+// Creates the user-specific routes
+app.get(`/rxns/auth/callback`, passport.authenticate('discord', {
+  failureRedirect: `http://www.nick-studios.com`
 }), function(req, res) {
-  res.redirect(`http://www.nick-studios.com/rxns?token=${a_token}`) // Successful auth
+
+  let random_token = rand() + rand(); // Creates a user-specific random token
+
+  let user = req.user; // The user with the data for the user as well as the user ID
+
+  // Creates the routes for data (with a random session/user token)
+  app.get(`/rxns/${random_token}/data`, function (req, res) {
+    res.json(user.data)
+    res.end();
+  })     
+  // Adds a reaction to a server (with a random session/user token)
+  app.post (`/rxns/${random_token}/add`, function (req, res) {
+    addOne(req.body.server, req.body.name, req.body.url);
+    res.end();
+  })
+
+  res.redirect(`http://www.nick-studios.com/rxns?token=${random_token}`) // Successful auth with the random_token
   res.end();
 });
 
