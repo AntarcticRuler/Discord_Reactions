@@ -102,6 +102,11 @@ app.get(`/rxns/auth/callback`, passport.authenticate('discord', {
     addOne(req.body.server, req.body.name, req.body.url);
     res.end();
   })
+  // Deletes a reaction from a server (with a random session/user token)
+  app.post (`/rxns/${random_token}/delete`, function (req, res) {
+    deleteOne(req.body.server, req.body.name, req.body.reaction);
+    res.end();
+  })
 
   res.redirect(`http://www.nick-studios.com/rxns?token=${random_token}`) // Successful auth with the random_token
   res.end();
@@ -184,7 +189,33 @@ function addOne (serverID, name, url) {
         });
     });
   });
+}
 
+// Deletes a reaction to a server
+function deleteOne (serverID, name) {
+
+  console.log (serverID);
+
+  // Finds the server to add the reaction to
+  collection.find( { id: serverID.toString() }).toArray(function(err, res) {
+    if (err) throw err;
+
+
+    console.log (res);
+
+    // Adds the reaction
+    delete res[0].reactions[name];
+
+    // Updates the server on the DB
+    collection.updateOne( { id: serverID } , { $set: { reactions: res[0].reactions } } , function(err, res) {
+        if (err) throw err;
+
+        // Updates the server_reactions on the server
+        collection.find ({}).toArray(function(err, res) {
+          server_reactions = res;
+        });
+    });
+  });
 }
 
 // GUILD DELETE

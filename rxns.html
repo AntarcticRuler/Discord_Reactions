@@ -5,6 +5,9 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/js/foundation.min.js"></script>
     <link rel="stylesheet" href="./rxns.css">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
 </head>
 
 <body> 
@@ -38,6 +41,7 @@
     // console.log (code);
 
     var serverID; // The ID of the currently clicked server
+    var clicked_server;
 
     var token = window.location.href.split('token=')[1];
 
@@ -68,6 +72,7 @@
     function clickServer (element) {
 
       serverID = element.id;
+      clicked_server = element;
       
       $.get( "./rxns/server_reactions", function( server_data ) { 
 
@@ -125,7 +130,7 @@
           // Loops through and displays all reactions
           reactions.forEach ( reaction => {
             console.log (reaction);
-            string += `<p class="columns small-12 medium-6 large-4">${shortenReactionName(reaction[0])} <strong>:</strong> ${shortenReactionName(reaction[1])}</p>`
+            string += `<div class="columns small-12 medium-6 large-4"> <div class="row"> <p class="columns small-10">${shortenReactionName(reaction[0])} <strong>:</strong> ${shortenReactionName(reaction[1])}</p><p class="columns small-2 delete" onclick="deleteReaction('${reaction[0]}')">X</p> </div> </div>`
           } )
           string += `</div> </div>`
         }
@@ -133,12 +138,29 @@
       return string;
     }
 
+    function deleteReaction (name) {
+      console.log ("ATTEMPTING TO DELETE");
+      let data = { server: serverID, name: name}
+      console.log (data);
+      $.ajax({
+        url: `/rxns/${token}/delete`,
+        type: "POST",
+        dataType: "json",
+        contentType : "application/json",
+        data: JSON.stringify(data),
+        success: function(data){
+          console.log (data)
+          clickServer(clicked_server);
+        }
+      });
+    }
+
     // Shortens the name of the reaction
     function shortenReactionName (reaction) {
       if (reaction.split ('https://')[1])
         reaction = reaction.split ('https://')[1]
-      if (reaction.length > 22)
-        return `${reaction.substr(0, 22)}...`;
+      if (reaction.length > 19)
+        return `${reaction.substr(0, 19)}...`;
       return reaction;
     }
 
@@ -158,7 +180,7 @@
         data: JSON.stringify(data),
         success: function(data){
           console.log (data)
-          location.reload();
+          clickServer(clicked_server);
         }
       });
     }
