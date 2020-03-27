@@ -66,9 +66,7 @@
 
   // Checks to see if the user is logged in
   if (!token && !document.cookie)
-    document.getElementById("servers").innerHTML = `<h5 class=text-center>
-        <a href="/rxns/auth">You are not currently logged in! To log in, click here to authenticate yourself.</a>
-      </h5>`
+    loginPrompt();
   // Checks to see if the current token is stored in the document.cookie 
   else if (document.cookie)
       var data = $.get( `./rxns/${document.cookie}/data`, function( data ) { 
@@ -77,9 +75,11 @@
 
       postUser(document.cookie);
 
-    });
+    }).error ( () => { 
+      loginPrompt();
+    })
   // If the cookie doesnt exist but the token exists it sets the cookie to the token
-  else
+  else {
     document.cookie = token;
     // Adds all the user's servers to the screen to choose from
     var data = $.get( `./rxns/${token}/data`, function( data ) { 
@@ -88,7 +88,16 @@
 
       postUser(token);
 
-    });
+    }).error ( () => { 
+      loginPrompt();
+    })
+  }
+
+  function loginPrompt () {
+    document.getElementById("servers").innerHTML = `<h5 class=text-center>
+        <a href="/rxns/auth">You are not currently logged in! To log in, click here to authenticate yourself.</a>
+      </h5>`
+  }
 
   // Runs the site by going through each of the servers
   function run (data) {
