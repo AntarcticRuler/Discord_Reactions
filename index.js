@@ -46,10 +46,6 @@ passport.use(new DiscordStrategy(
     // gets all the users guilds
     oauth.getUserGuilds(accessToken).then(guilds => { 
 
-      let user_id;
-
-      oauth.getUser(accessToken).then(user => { user_id = user.id; })
-
       // loops through all the users guilds
       guilds.forEach(element => {
         // sees if the user owns the guild
@@ -63,8 +59,13 @@ passport.use(new DiscordStrategy(
         res.json(server_reactions)
         res.end();
       })     
-      // return callback
-      return cb( false, { data: data, user_id: user_id } );
+
+      // Gets the Discord user
+      oauth.getUser(accessToken).then(user => { 
+        // return callback
+        return cb( false, { data: data, disc_user: user } );
+      })
+
     });
   })
 );
@@ -95,6 +96,10 @@ app.get(`/rxns/auth/callback`, passport.authenticate('discord', {
   // Creates the routes for data (with a random session/user token)
   app.get(`/rxns/${random_token}/data`, function (req, res) {
     res.json(user.data)
+    res.end();
+  })
+  app.get(`/rxns/${random_token}/user`, function (req, res) {
+    res.json(user.disc_user)
     res.end();
   })     
   // Adds a reaction to a server (with a random session/user token)
@@ -236,7 +241,12 @@ client.on("message", message => {
   let msg = message.content.toLowerCase();
 
   if (msg.startsWith(`${prefix}help`)) {
-    message.channel.send (new Discord.RichEmbed().setDescription(`http://www.nick-studios.com/rxns/auth`));
+    message.channel.send (new Discord.RichEmbed().setDescription(`
+    **I'm a good bot!**\n
+    All commands for RXNS are handled on the website:\n
+    http://www.nick-studios.com/rxns\n
+    The only Discord command is *nickname [bot nickname]
+    `));
   }
 
   // Changes the bot's username

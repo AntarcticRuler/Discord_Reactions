@@ -7,13 +7,30 @@
     <link rel="stylesheet" href="./rxns.css">
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
 </head>
 
 <body> 
 
+  <div class="top-bar show-for-landscape" style="min-height: 10%; top: 1%; background-color: transparent;">
+    <div class="row">
+      <div class="columns top-bar-left" style="min-width: 350px; max-width: 25%; margin-right: auto;">
+        <a href="/">
+          <img src="./assets/NickStudiosLogoLight.png" style="display: block; width: auto; height: auto; max-height: 72px; min-width: 350px; max-width: 25%; margin-top: auto;">
+        </a>
+      </div>
+      <div class="top-bar-right" style="max-width: calc(64px + 1%); margin-left: auto;">
+          <img id="user_image" style="width: 64px; height: 64px; border-radius: 36px; display: block;">
+      </div>
+    </div>
+  </div>
+  <div class="columns top-bar show-for-portrait" style="width: auto; height: auto; min-height: 11.5%; background-color: transparent;">
+    <a href="/">
+      <img src="./assets/NickStudiosLogoLight.png" style="display: block; width: auto; height: auto; margin: auto; max-width: 90%; max-height: 90%;">
+    </a>
+  </div>
+
   <div class="row"> 
-    <h3 class="text-center"> Your Servers </h3>
+    <h3 class="text-center"> <u> Your Servers </u> </h3>
   </div>
   <div id="servers" class="row align-center">
     
@@ -45,28 +62,44 @@
 
     var token = window.location.href.split('token=')[1];
 
-    // Adds all the user's servers to the screen to choose from
-    var data = $.get( `./rxns/${token}/data`, function( data ) { 
+    // Checks to see if the user is logged in
+    if (!token)
+      document.getElementById("servers").innerHTML = `<h5 class=text-center>
+          <a href="/rxns/auth">You are not currently logged in! To log in, click here to authenticate yourself.</a>
+        </h5>`
+    else
+      // Adds all the user's servers to the screen to choose from
+      var data = $.get( `./rxns/${token}/data`, function( data ) { 
 
-      console.log (data);
+        console.log (data);
 
-      let servers = document.getElementById("servers");
+        let servers = document.getElementById("servers");
 
-      let count = 0;
+        let count = 0;
 
-      data.forEach( () => { count++ })
+        data.forEach( () => { count++ })
 
-      data.forEach(element => {
-        let server = document.createElement('h5')
-        server.innerHTML = element.name;
-        server.onclick = function () { clickServer(element) };
-        server.classList.add ('columns');
-        server.classList.add ('text-center');
-        server.style.maxWidth = `${100/count}%`
-        servers.appendChild(server);
+        data.forEach(element => {
+          let server = document.createElement('h5')
+          server.innerHTML = element.name;
+          server.onclick = function () { clickServer(element) };
+          server.classList.add ('columns');
+          server.classList.add ('text-center');
+          server.classList.add ('pointer');
+          server.style.maxWidth = `${100/count}%`
+          servers.appendChild(server);
+        });
+
+        postUser();
+
       });
 
-    });
+    function postUser () {
+      console.log ('uwu');
+      var user_data = $.get( `./rxns/${token}/user`, function( u_data ) { 
+        document.getElementById("user_image").src = `https://cdn.discordapp.com/avatars/${u_data.id}/${u_data.avatar}.png?size=512`;
+      });
+    }
 
     // Runs when a server is clicked on
     function clickServer (element) {
@@ -150,13 +183,14 @@
         data: JSON.stringify(data),
         success: function(data){
           console.log (data)
-          clickServer(clicked_server);
         }
       });
+      refresh();
     }
 
     // Shortens the name of the reaction
     function shortenReactionName (reaction) {
+      reaction = reaction.split ("'").join("");
       if (reaction.split ('https://')[1])
         reaction = reaction.split ('https://')[1]
       if (reaction.length > 19)
@@ -180,8 +214,17 @@
         data: JSON.stringify(data),
         success: function(data){
           console.log (data)
-          clickServer(clicked_server);
         }
       });
+      refresh();
     }
+
+    // Refreshes the page
+    function refresh () {
+      console.log ("REFRESHING");
+      setTimeout(() => {
+        clickServer(clicked_server);
+      }, 225);
+    }
+
 </script>

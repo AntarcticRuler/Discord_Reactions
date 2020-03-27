@@ -1,4 +1,39 @@
+@font-face {
+    font-family: "BonvenoCF";
+    src: url("/assets/BonvenoCF-Light.otf");
+}
+
+@font-face {
+    font-family: "Titillium Web";
+    src: url("/assets/TitilliumWeb.ttf");
+}
+
+body {
+    /* background: rgb(187,187,255);
+    background: radial-gradient(circle, rgba(187,187,255,1) 85%, rgba(0,212,255,1) 98%, rgba(255,0,238,1) 100%); */
+    background-color: #2C2F33;
+}
+
 input {
     max-width: 65vw;
     margin: auto;
+}
+
+.tw, h5, h4, p {
+    font-family: "Titillium Web", sans-serif;
+    color: white;
+}
+
+.bcf, h3 {
+    font-family: "BonvenoCF";
+    color: white;
+}
+
+.pointer {
+    cursor: pointer;
+}
+
+.delete {
+    cursor: pointer;
+    color: #7289DA;
 }
