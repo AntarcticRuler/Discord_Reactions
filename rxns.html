@@ -47,16 +47,6 @@
 <script>
   $(document).foundation();
 
-  // var code = localStorage.getItem('key');
-
-  // if (!window.location.href.split('code=')[1] && (code == undefined || code == 'undefined'))
-  //   window.location.href = "./rxns/auth";
-  // else 
-  //   localStorage.setItem('key', window.location.href.split('code=')[1]);
-
-  // code = localStorage.getItem('key');
-  // console.log (code);
-
   var serverID; // The ID of the currently clicked server
   var clicked_server;
 
@@ -68,25 +58,26 @@
   if (!token && !document.cookie)
     loginPrompt();
   // Checks to see if the current token is stored in the document.cookie 
-  else if (document.cookie)
-      var data = $.get( `./rxns/${document.cookie}/data`, function( data ) { 
-
-      run (data);
-
-      postUser(document.cookie);
-
-    }).error ( () => { 
-      loginPrompt();
-    })
-  // If the cookie doesnt exist but the token exists it sets the cookie to the token
-  else {
+  else if (token) {
     document.cookie = token;
-    // Adds all the user's servers to the screen to choose from
-    var data = $.get( `./rxns/${token}/data`, function( data ) { 
+      var data = $.get( `./rxns/${token}/data`, function( data ) { 
 
       run (data);
 
       postUser(token);
+
+    }).error ( () => { 
+      loginPrompt();
+    })
+  }
+  // If the cookie doesnt exist but the token exists it sets the cookie to the token
+  else if (document.cookie) {
+    // Adds all the user's servers to the screen to choose from
+    var data = $.get( `./rxns/${document.cookie}/data`, function( data ) { 
+
+      run (data);
+
+      postUser(document.cookie);
 
     }).error ( () => { 
       loginPrompt();
