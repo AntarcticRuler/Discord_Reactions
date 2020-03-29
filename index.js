@@ -28,6 +28,9 @@ var a_token;
 
 var server_reactions;
 
+const kurisu_red = "#592929"
+
+// Returns a random String of characters, used for the random_token variable
 var rand = function() { return Math.random().toString(36).substr(2); };
 
 passport.use(new DiscordStrategy(
@@ -140,12 +143,33 @@ client.on("ready", () => {
       console.log(`Example app listening on port ${port}!`)
     })
 
+    bot_data();
+
     collection.find ({}).toArray(function(err, res) {
       server_reactions = res;
     });
 
   });
 });
+
+function bot_data () {
+  // The bot_data res that gets all the relevant info for the bot
+  app.get('/rxns/bot_data', function (req, res) {
+    res.json({ 
+      guild_count: client.guilds.size,
+      user_count: client.users.size,
+      server_reactions_size: getReactionCount()
+    })
+    res.end();
+  })
+}
+
+// Gets the count of all existing reactions
+function getReactionCount () {
+  count = 0;
+  server_reactions.forEach (server => count += Object.entries(server.reactions).length) 
+  return count;
+}
 
 // GUILD CREATE
 client.on ("guildCreate", guild => {
@@ -241,12 +265,18 @@ client.on("message", message => {
   let msg = message.content.toLowerCase();
 
   if (msg.startsWith(`${prefix}help`)) {
-    message.channel.send (new Discord.RichEmbed().setDescription(`
+    let embed = new Discord.RichEmbed().setDescription(`
     **I'm a good bot!**\n
     All commands for RXNS are handled on the website:\n
     http://www.nick-studios.com/rxns\n
-    The only Discord command is *nickname [bot nickname]
-    `));
+    The only Discord command is *nickname [bot nickname]\n
+    Any issues can be sent to AntarcticRuler#1529
+    `).setColor (kurisu_red);
+    // Checks to see if the bot can send messages in the channel, if not it DMs the help message
+    if (message.channel.permissionsFor(message.guild.member(client.user.id)).has('SEND_MESSAGES'))
+      message.channel.send (embed);
+    else
+      message.author.send (embed);
   }
 
   // Changes the bot's username
@@ -254,15 +284,15 @@ client.on("message", message => {
     if (message.member.permissions.has('MANAGE_NICKNAMES') && message.guild.member(client.user.id).hasPermission('CHANGE_NICKNAME')) {
       if (msg.split(' ')[1]) {
         message.guild.member(client.user.id).setNickname(message.content.slice(msg.split(' ')[0].length));
-        message.channel.send (new Discord.RichEmbed().setDescription('Username Changed'))
+        message.channel.send (new Discord.RichEmbed().setDescription('Username changed!').setColor(kurisu_red))
       }
       else
-        message.channel.send (new Discord.RichEmbed().setDescription('Please enter a nickname'))
+        message.channel.send (new Discord.RichEmbed().setDescription('Please enter a nickname!').setColor(kurisu_red))
     }
     else if (!message.member.hasPermission('MANAGE_NICKNAMES'))
-      message.channel.send (new Discord.RichEmbed().setDescription('You do not have manage nicknames permission'))
+      message.channel.send (new Discord.RichEmbed().setDescription('You do not have manage nicknames permission!').setColor(kurisu_red))
     else
-      message.channel.send (new Discord.RichEmbed().setDescription('Error: The bot may not have nickname changing permissions'))
+      message.channel.send (new Discord.RichEmbed().setDescription('Error: The bot may not have nickname changing permissions!').setColor(kurisu_red))
   }
 
   // The meat of the code: for every server it checks if there is an applicable reaction to be sent :)

@@ -6,11 +6,27 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/js/foundation.min.js"></script>
     <link rel="stylesheet" href="./rxns.css">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="https://cdn.discordapp.com/avatars/688388524528893955/a808fd599dcab4b688c5e7d2e61c59d1.png?size=2048" type="image/gif">
+
+    <meta name="description" content="A Discord Bot here to assist in Reactions!">
+    <meta name="keywords" content="RXNS,Reactions,Discord,Bot">
+    <meta name="author" content="NickStudios">
+    <meta name="author" content="AntarcticRuler">
+    <meta name="theme-color" content="#592929">
+
+    <meta property="og:title" content="RXNS" />
+    <meta property="og:description" content="A Discord Bot Here to Assist in Reactions!">
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="http://www.nick-studios.com/rxns" />
+    <meta property="og:image" content="https://cdn.discordapp.com/avatars/688388524528893955/a808fd599dcab4b688c5e7d2e61c59d1.png?size=2048" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body> 
 
+  <!-- FIXED STUFF -->
+  <!-- TOP BAR -->
   <div class="top-bar show-for-landscape" style="min-height: 10%; top: 1%; background-color: transparent;">
     <div class="row">
       <div class="columns top-bar-left" style="min-width: 350px; max-width: 25%; margin-right: auto;">
@@ -18,8 +34,9 @@
           <img src="./assets/NickStudiosLogoLight.png" style="display: block; width: auto; height: auto; max-height: 72px; min-width: 350px; max-width: 25%; margin-top: auto;">
         </a>
       </div>
-      <div class="top-bar-right" style="max-width: calc(64px + 1%); margin-left: auto;">
-          <img id="user_image" style="width: 64px; height: 64px; border-radius: 36px; display: block;">
+      <div class="top-bar-right" style="max-width: fit-content; margin-left: auto; white-space: nowrap;">
+          <p id="log_out" class="pointer" style="display: inline-block;" onclick="logOut()">LO<u>G OUT</u></p>
+          <img id="user_image" style="width: 64px; height: 64px; border-radius: 36px; display: inline-block;">
       </div>
     </div>
   </div>
@@ -29,16 +46,29 @@
     </a>
   </div>
 
+  <!-- RXNS & YOUR SERVERS -->
   <div class="row"> 
-    <h3 class="text-center"> <u> Your Servers </u> </h3>
+    <h2 class="text-center"> <i> RXNS </i> </h2>
   </div>
+  <div class="row"> 
+    <h4 class="text-center"> <u> Your Servers </u> </h4>
+  </div>
+
+  <!-- DYNAMIC STUFF -->
+  <!-- THE USERS SERVERS -->
   <div id="servers" class="row align-center">
     
   </div>
 
-  <div id=serverInfo>
+  <!-- THE SPECIFIC SERVER'S INFO -->
+  <div id="serverInfo">
 
   </div>
+
+  <br>
+
+  <!-- THE FOOTER / THE BOTS INFO -->
+  <div id="botInfo" style="margin: auto; bottom: 0; left: 0; right: 0; position: absolute; "></div>
 
 </body>
 
@@ -53,6 +83,9 @@
   var token = window.location.href.split('token=')[1];
 
   console.log (document.cookie);
+
+  getBotData();
+  hideUser();
 
   // Checks to see if the user is logged in
   if (!token && !document.cookie)
@@ -84,6 +117,7 @@
     })
   }
 
+  // Puts the log-in prompt under "Your Servers"
   function loginPrompt () {
     document.getElementById("servers").innerHTML = `<h5 class=text-center>
         <a href="/rxns/auth">You are not currently logged in! To log in, click here to authenticate yourself.</a>
@@ -112,10 +146,12 @@
     });
   }
 
+  // Gets the user data and puts the user's image on screen
   function postUser (user_token) {
     console.log ('uwu');
     var user_data = $.get( `./rxns/${user_token}/user`, function( u_data ) { 
       document.getElementById("user_image").src = `https://cdn.discordapp.com/avatars/${u_data.id}/${u_data.avatar}.png?size=512`;
+      showUser();
     });
   }
 
@@ -141,11 +177,11 @@
 
       // Adds the info about the server
       if (existing) {
-        info.innerHTML = `<h3 class="text-center">${element.name}</h3> <img  style="display:block;margin:auto;"" src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}"> 
+        info.innerHTML = `<h3 class="text-center">${element.name}</h3> <img style="display:block;margin:auto;border-radius:50%;" src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}"> 
                         <br>
-                        <input style="margin:auto" class="text-center" type="text" id="name" name="name" placeholder="Reaction Name">
+                        <input style="margin:auto" class="text-center" type="text" id="name" name="name" placeholder="Reaction (ex. 'How are you?')">
                         <br>
-                        <input style="margin:auto" class="text-center" type="text" id="url" name="url" placeholder="Reaction">
+                        <input style="margin:auto" class="text-center" type="text" id="url" name="url" placeholder="Response (ex. 'Im good!')">
                         <br>
                         <input style="display:block; margin:auto" class="text-center" type="submit" value="Submit" onclick=submit()>
                         <br><br>
@@ -159,7 +195,7 @@
                         </div>`
       }
       else 
-        info.innerHTML = `<h3 class="text-center">${element.name}</h3> <img  style="display:block;margin:auto;"" src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}">
+        info.innerHTML = `<h3 class="text-center">${element.name}</h3> <img  style="display:block;margin:auto;border-radius:50%;" src="https://cdn.discordapp.com/icons/${element.id}/${element.icon}">
         <br>
         <h4 class="text-center"><a href="https://discordapp.com/oauth2/authorize?client_id=688388524528893955&scope=bot&permissions=67488832" target="blank">
           Add RXNS to your server!
@@ -167,9 +203,12 @@
 
       console.log (`${element.name} clicked!`);
 
+      updateFooter();
+
     });
   }
 
+  // Gets all the current reactions and puts them in a string
   function getCurrReactions (server_data) {
     let string = ``;
     let count = 0;
@@ -189,21 +228,24 @@
     return string;
   }
 
+  // Deletes a reaction from the database
   function deleteReaction (name) {
-    console.log ("ATTEMPTING TO DELETE");
-    let data = { server: serverID, name: name}
-    console.log (data);
-    $.ajax({
-      url: `/rxns/${token}/delete`,
-      type: "POST",
-      dataType: "json",
-      contentType : "application/json",
-      data: JSON.stringify(data),
-      success: function(data){
-        console.log (data)
-      }
-    });
-    refresh();
+    if (confirm (`Do you wish to delete "${name}"?`)){
+      console.log ("ATTEMPTING TO DELETE");
+      let data = { server: serverID, name: name}
+      console.log (data);
+      $.ajax({
+        url: `/rxns/${token}/delete`,
+        type: "POST",
+        dataType: "json",
+        contentType : "application/json",
+        data: JSON.stringify(data),
+        success: function(data){
+          console.log (data)
+        }
+      });
+      refresh();
+    }
   }
 
   // Shortens the name of the reaction
@@ -242,6 +284,41 @@
     console.log ("REFRESHING");
     setTimeout(() => {
       clickServer(clicked_server);
-    }, 225);
+    }, 250);
+  }
+
+  function getBotData () {
+    $.get( "./rxns/bot_data", function( bot_data ) { 
+      document.getElementById('botInfo').innerHTML = `
+      <div class="row" style="white-space: nowrap">
+        <img src="https://cdn.discordapp.com/avatars/688388524528893955/a808fd599dcab4b688c5e7d2e61c59d1.png?size=2048" style="width: 72px; height: 72px; border-radius: 36px; display: inline-block;" class="marign-right: auto;">
+        <p style="margin-left: auto; display: block; width: fit-content; vertical-align: -100%; display: inline-block;" id="bot_info"> <u><i>RXNS</i></u><br>${bot_data.guild_count} Guilds<br>${bot_data.server_reactions_size} Reactions</p>
+      </div>
+      `
+      console.log (document.getElementById('bot_info').clientWidth);
+      document.getElementById('botInfo').style.width = `calc(${document.getElementById('bot_info').clientWidth}px + 96px + 10px)`
+    });
+  }
+
+  // Shows/Hides the User
+  function hideUser () {
+    document.getElementById("log_out").style.display = 'none';
+    document.getElementById("user_image").style.display = 'none';
+  }
+  function showUser () {
+    document.getElementById("log_out").style.display = 'inline-block';
+    document.getElementById("user_image").style.display = 'inline-block';
+  }
+
+  // Clears the cookie and refreshes the page, effectively logging the user out
+  function logOut () {
+    document.cookie = "";
+    window.location.href = "/rxns"
+  }
+
+  // Updates the footers position from absolute to relative
+  function updateFooter () {
+    let footer =  document.getElementById('botInfo');
+    footer.style.position = 'relative';
   }
 </script>
