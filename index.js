@@ -30,6 +30,8 @@ var server_reactions;
 
 const kurisu_red = "#592929"
 
+const recent_reactions = new Set();
+
 // Returns a random String of characters, used for the random_token variable
 var rand = function() { return Math.random().toString(36).substr(2); };
 
@@ -299,11 +301,20 @@ client.on("message", message => {
   server_reactions.forEach ( server => {
     if (server.id == message.guild.id)
       Object.entries(server.reactions).forEach ( reaction => {
-        if (msg.includes (reaction[0]))
+        if (msg.includes (reaction[0]) && !recent_reactions.has (reaction[0]) && random_chance) {
           message.channel.send (reaction[1]);
+          recent_reactions.add (reaction[0]); // Adds to cooldown
+          setTimeout(() => { // Removes from cooldown
+            recent_reactions.delete(reaction[0])
+          }, Math.floor (Math.random() * 15000 + 500));
+        }
       })
   })
 
 });
+
+function random_chance () {
+  return Math.floor (Math.random () * 10) < 9;
+}
 
 client.login(token);
