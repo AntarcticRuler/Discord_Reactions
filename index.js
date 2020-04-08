@@ -266,6 +266,7 @@ client.on("message", message => {
   // Variables
   let msg = message.content.toLowerCase();
 
+  // The help command
   if (msg.startsWith(`${prefix}help`)) {
     let embed = new Discord.RichEmbed().setDescription(`
     **I'm a good bot!**\n
@@ -298,23 +299,31 @@ client.on("message", message => {
   }
 
   // The meat of the code: for every server it checks if there is an applicable reaction to be sent :)
+  /* CAVEATS:
+      - Only responds 75% of the time
+      - Only responds up to 3 reactions
+      - Will have a cool-down for specific reactions of 0.5 seconds to 15.5 seconds
+  */
   server_reactions.forEach ( server => {
     if (server.id == message.guild.id)
       Object.entries(server.reactions).forEach ( reaction => {
-        if (msg.includes (reaction[0]) && !recent_reactions.has (reaction[0]) && random_chance) {
+        let reaction_count = 0;
+        if (msg.includes (reaction[0]) && !recent_reactions.has (reaction[0]) && random_chance() && reaction_count <= 3) {
           message.channel.send (reaction[1]);
           recent_reactions.add (reaction[0]); // Adds to cooldown
           setTimeout(() => { // Removes from cooldown
             recent_reactions.delete(reaction[0])
           }, Math.floor (Math.random() * 15000 + 500));
+          reaction_count++;
         }
       })
   })
 
 });
 
+// Returns a true or false if above or below 75%
 function random_chance () {
-  return Math.floor (Math.random () * 10) < 9;
+  return Math.random () * 10 < 7.5;
 }
 
 client.login(token);
