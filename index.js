@@ -4,6 +4,8 @@
 const Discord = require("discord.js");
 const assert = require ('assert');
 
+const fs = require ('fs')
+
 var client = new Discord.Client();
 
 var config = require ('./config.json');
@@ -149,7 +151,10 @@ client.on("ready", () => {
 
     collection.find ({}).toArray(function(err, res) {
       server_reactions = res;
+      run ();
     });
+
+    remind();
 
   });
 });
@@ -258,68 +263,108 @@ client.on ("guildDelete", guild => {
   });
 });
 
-// MESSAGE
-const prefix = "*";
-client.on("message", message => {
-  if (message.author.bot) return;
+// SENDS REMINDERS TO ALL PEOPLE
+function remind () {
+  setInterval(() => {
+    // Gets reminders.json
+    fs.readFile('/home/pi/rxns/reminders.json', function (err, data) {
+      var json = JSON.parse(data);
+      // Loops through each person
+      json.people.forEach (person => {
+        if (client.users.cache.get (person))
+          client.users.cache.get(person).send (new Discord.RichEmbed ().setDescription('Your friendly reminder to vote for me at \nhttps://top.gg/bot/688388524528893955'));
+        else if (client.users.get (person))
+          client.users.get(person).send (new Discord.RichEmbed ().setDescription('Your friendly reminder to vote for me at \nhttps://top.gg/bot/688388524528893955'));
+      })
+    });
+  }, 12 * 60 * 60 * 100);
+}
 
-  // Variables
-  let msg = message.content.toLowerCase();
+function run () {
 
-  // The help command
-  if (msg.startsWith(`${prefix}help`)) {
-    let embed = new Discord.RichEmbed().setDescription(`
-    **I'm a good bot!**\n
-    All commands for RXNS are handled on the website:\n
-    http://www.nick-studios.com/rxns\n
-    The only Discord command is *nickname [bot nickname]\n
-    Any issues can be sent to AntarcticRuler#1529
-    `).setColor (kurisu_red);
-    // Checks to see if the bot can send messages in the channel, if not it DMs the help message
-    if (message.channel.permissionsFor(message.guild.member(client.user.id)).has('SEND_MESSAGES'))
-      message.channel.send (embed);
-    else
-      message.author.send (embed);
-  }
+  // MESSAGE
+  const prefix = "*";
+  client.on("message", message => {
+    if (message.author.bot) return;
 
-  // Changes the bot's username
-  if (msg.startsWith(`${prefix}nick`) || msg.startsWith(`${prefix}nickname`)) {
-    if (message.member.permissions.has('MANAGE_NICKNAMES') && message.guild.member(client.user.id).hasPermission('CHANGE_NICKNAME')) {
-      if (msg.split(' ')[1]) {
-        message.guild.member(client.user.id).setNickname(message.content.slice(msg.split(' ')[0].length));
-        message.channel.send (new Discord.RichEmbed().setDescription('Username changed!').setColor(kurisu_red))
-      }
+    // Variables
+    let msg = message.content.toLowerCase();
+
+    // The help command
+    if (msg.startsWith(`${prefix}help`)) {
+      let embed = new Discord.RichEmbed().setDescription(`
+      **I'm a good bot!**\n
+      All commands for RXNS are handled on the website:\n
+      http://www.nick-studios.com/rxns\n
+      The only Discord command is *nickname [bot nickname]\n
+      Any issues can be sent to AntarcticRuler#1529
+      `).setColor (kurisu_red);
+      // Checks to see if the bot can send messages in the channel, if not it DMs the help message
+      if (message.channel.permissionsFor(message.guild.member(client.user.id)).has('SEND_MESSAGES'))
+        message.channel.send (embed);
       else
-        message.channel.send (new Discord.RichEmbed().setDescription('Please enter a nickname!').setColor(kurisu_red))
+        message.author.send (embed);
     }
-    else if (!message.member.hasPermission('MANAGE_NICKNAMES'))
-      message.channel.send (new Discord.RichEmbed().setDescription('You do not have manage nicknames permission!').setColor(kurisu_red))
-    else
-      message.channel.send (new Discord.RichEmbed().setDescription('Error: The bot may not have nickname changing permissions!').setColor(kurisu_red))
-  }
 
-  // The meat of the code: for every server it checks if there is an applicable reaction to be sent :)
-  /* CAVEATS:
-      - Only responds 75% of the time
-      - Only responds up to 3 reactions
-      - Will have a cool-down for specific reactions of 0.5 seconds to 15.5 seconds
-  */
-  server_reactions.forEach ( server => {
-    if (server.id == message.guild.id)
-      Object.entries(server.reactions).forEach ( reaction => {
-        let reaction_count = 0;
-        if (msg.includes (reaction[0]) && !recent_reactions.has (reaction[0]) && random_chance() && reaction_count <= 3) {
-          message.channel.send (reaction[1]);
-          recent_reactions.add (reaction[0]); // Adds to cooldown
-          setTimeout(() => { // Removes from cooldown
-            recent_reactions.delete(reaction[0])
-          }, Math.floor (Math.random() * 15000 + 500));
-          reaction_count++;
+    // Changes the bot's username
+    if (msg.startsWith(`${prefix}nick`) || msg.startsWith(`${prefix}nickname`)) {
+      if (message.member.permissions.has('MANAGE_NICKNAMES') && message.guild.member(client.user.id).hasPermission('CHANGE_NICKNAME')) {
+        if (msg.split(' ')[1]) {
+          message.guild.member(client.user.id).setNickname(message.content.slice(msg.split(' ')[0].length));
+          message.channel.send (new Discord.RichEmbed().setDescription('Username changed!').setColor(kurisu_red))
+        }
+        else
+          message.channel.send (new Discord.RichEmbed().setDescription('Please enter a nickname!').setColor(kurisu_red))
+      }
+      else if (!message.member.hasPermission('MANAGE_NICKNAMES'))
+        message.channel.send (new Discord.RichEmbed().setDescription('You do not have manage nicknames permission!').setColor(kurisu_red))
+      else
+        message.channel.send (new Discord.RichEmbed().setDescription('Error: The bot may not have nickname changing permissions!').setColor(kurisu_red))
+    }
+
+    // Voting Reminder
+    if (msg.startsWith(`${prefix}vote`)) {
+      message.channel.send (new Discord.RichEmbed ().setDescription('Sending reminders for voting for \nhttps://top.gg/bot/688388524528893955\nEvery 12 hours!'))
+
+      // For some reaosn, FS only wants to work from the root directory. Likely because its running under PM2
+      fs.readFile('/home/pi/rxns/reminders.json', function (err, json_data) {
+        var json = JSON.parse(json_data)
+        let flag = false; // Flags whether the person is in the JSON file or not
+        json.people.forEach (person => {
+          if (person == "198504755016892416")
+            flag = true;
+        })
+        if (!flag){
+            json.people.push("198504755016892416")
+            fs.writeFile("/home/pi/rxns/reminders.json", JSON.stringify(json), (error) => { console.log (error) })
         }
       })
-  })
+    }
 
-});
+    // The meat of the code: for every server it checks if there is an applicable reaction to be sent :)
+    /* CAVEATS:
+        - Only responds 75% of the time
+        - Only responds up to 3 reactions
+        - Will have a cool-down for specific reactions of 0.5 seconds to 15.5 seconds
+    */
+    server_reactions.forEach ( server => {
+      if (server.id == message.guild.id)
+        Object.entries(server.reactions).forEach ( reaction => {
+          let reaction_count = 0;
+          if (msg.includes (reaction[0]) && !recent_reactions.has (reaction[0]) && random_chance() && reaction_count <= 3) {
+            message.channel.send (reaction[1]);
+            recent_reactions.add (reaction[0]); // Adds to cooldown
+            setTimeout(() => { // Removes from cooldown
+              recent_reactions.delete(reaction[0])
+            }, Math.floor (Math.random() * 15000 + 500));
+            reaction_count++;
+          }
+        })
+    })
+
+  });
+
+}
 
 // Returns a true or false if above or below 75%
 function random_chance () {
