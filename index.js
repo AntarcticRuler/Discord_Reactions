@@ -79,11 +79,11 @@ passport.use(new DiscordStrategy(
 
 // Im not 100% sure how this does it, but from what google tells me it creates a user-only session
 passport.serializeUser(function(user, done) {
-  console.log (user);
+  // console.log (user);
   done(null, user);
 });
 passport.deserializeUser(function(user, done) {
-  console.log (user);
+  // console.log (user);
   done(null, user);
 });
 
@@ -93,7 +93,7 @@ app.get('/rxns/auth', passport.authenticate('discord'));
 // The callback for the authentication
 // Creates the user-specific routes
 app.get(`/rxns/auth/callback`, passport.authenticate('discord', {
-  failureRedirect: `http://www.nick-studios.com`
+  failureRedirect: `http://www.nick-studios.com/rxns`
 }), function(req, res) {
 
   let random_token = rand() + rand(); // Creates a user-specific random token
@@ -144,7 +144,7 @@ client.on("ready", () => {
     client.user.setActivity(`*help`);
 
     app.listen(port, (req,res) => { 
-      console.log(`Example app listening on port ${port}!`)
+      console.log(`${client.user.tag} listening on port ${port}!`)
     })
 
     bot_data();
@@ -178,34 +178,10 @@ function getReactionCount () {
   return count;
 }
 
-// GUILD CREATE
-client.on ("guildCreate", guild => {
-
-  console.log ("ADDING")
-
-  // Creates the GUILD value
-  let server = {
-    id: guild.id,
-    reactions: new Map()
-  }
-
-  // Inserts the guild
-  collection.insertOne(server, function(err, res) {
-      if (err) throw err;
-      console.log(guild.name + " ADDED");
-
-      collection.find ({}).toArray(function(err, res) {
-        server_reactions = res;
-      });
-
-  });
-
-});
-
 // Adds a reaction to a server
 function addOne (serverID, name, url) {
 
-  console.log (serverID);
+  console.log (`ADDING ${name}:${url} TO ${serverID}`);
 
   // Finds the server to add the reaction to
   collection.find( { id: serverID.toString() }).toArray(function(err, res) {
@@ -230,14 +206,11 @@ function addOne (serverID, name, url) {
 // Deletes a reaction to a server
 function deleteOne (serverID, name) {
 
-  console.log (serverID);
+  console.log (`DELETING ${name} FROM ${serverID}`);
 
   // Finds the server to add the reaction to
   collection.find( { id: serverID.toString() }).toArray(function(err, res) {
     if (err) throw err;
-
-
-    console.log (res);
 
     // Adds the reaction
     delete res[0].reactions[name];
@@ -254,15 +227,6 @@ function deleteOne (serverID, name) {
   });
 }
 
-// GUILD DELETE
-client.on ("guildDelete", guild => {
-  // Deletes the guild when the bot leaves
-  collection.deleteOne ({ id: guild.id }, function(err, res) {
-    if (err) throw err;
-    console.log(guild.name + " DELETED");
-  });
-});
-
 // SENDS REMINDERS TO ALL PEOPLE
 function remind () {
   setInterval(() => {
@@ -271,16 +235,48 @@ function remind () {
       var json = JSON.parse(data);
       // Loops through each person
       json.people.forEach (person => {
-        if (client.users.cache.get (person))
-          client.users.cache.get(person).send (new Discord.RichEmbed ().setDescription('Your friendly reminder to vote for me at \nhttps://top.gg/bot/688388524528893955'));
+        if (client.users.cache != undefined)
+          client.users.cache.get(person).send (new Discord.RichEmbed ().setDescription('Your friendly reminder to vote for me at \nhttps://top.gg/bot/688388524528893955')).catch (err => console.error(`COULD NOT SEND REMINDER MESSAGE\n${err}`));
         else if (client.users.get (person))
-          client.users.get(person).send (new Discord.RichEmbed ().setDescription('Your friendly reminder to vote for me at \nhttps://top.gg/bot/688388524528893955'));
+          client.users.get(person).send (new Discord.RichEmbed ().setDescription('Your friendly reminder to vote for me at \nhttps://top.gg/bot/688388524528893955')).catch (err => console.error(`COULD NOT SEND REMINDER MESSAGE\n${err}`));
       })
     });
   }, 12 * 60 * 60 * 100);
 }
 
 function run () {
+
+  // GUILD CREATE
+  client.on ("guildCreate", guild => {
+
+    // Creates the GUILD value
+    let server = {
+      id: guild.id,
+      reactions: new Map()
+    }
+
+    // Inserts the guild
+    collection.insertOne(server, function(err, res) {
+        if (err) throw err;
+        console.log(`GUILD ${guild.name} ADDED`);
+
+        collection.find ({}).toArray(function(err, res) {
+          server_reactions = res;
+        });
+
+    });
+
+  });
+
+  // GUILD DELETE
+  client.on ("guildDelete", guild => {
+    // Deletes the guild when the bot leaves
+    collection.deleteOne ({ id: guild.id }, function(err, res) {
+      if (err) throw err;
+      console.log(`GUILD ${guild.name} DELETED`);
+    });
+  });
+
 
   // MESSAGE
   const prefix = "*";
@@ -301,9 +297,9 @@ function run () {
       `).setColor (kurisu_red);
       // Checks to see if the bot can send messages in the channel, if not it DMs the help message
       if (message.channel.permissionsFor(message.guild.member(client.user.id)).has('SEND_MESSAGES'))
-        message.channel.send (embed);
+        message.channel.send (embed).catch (err => console.error(`COULD NOT SEND HELP MESSAGE\n${err}`));
       else
-        message.author.send (embed);
+        message.author.send (embed).catch (err => console.error(`COULD NOT SEND HELP MESSAGE\n${err}`));
     }
 
     // Changes the bot's username
@@ -311,20 +307,20 @@ function run () {
       if (message.member.permissions.has('MANAGE_NICKNAMES') && message.guild.member(client.user.id).hasPermission('CHANGE_NICKNAME')) {
         if (msg.split(' ')[1]) {
           message.guild.member(client.user.id).setNickname(message.content.slice(msg.split(' ')[0].length));
-          message.channel.send (new Discord.RichEmbed().setDescription('Username changed!').setColor(kurisu_red))
+          message.channel.send (new Discord.RichEmbed().setDescription('Username changed!').setColor(kurisu_red)).catch (err => console.error(`COULD NOT SEND NICKNAME MESSAGE\n${err}`))
         }
         else
-          message.channel.send (new Discord.RichEmbed().setDescription('Please enter a nickname!').setColor(kurisu_red))
+          message.channel.send (new Discord.RichEmbed().setDescription('Please enter a nickname!').setColor(kurisu_red)).catch (err => console.error(`COULD NOT SEND NICKNAME MESSAGE\n${err}`))
       }
       else if (!message.member.hasPermission('MANAGE_NICKNAMES'))
-        message.channel.send (new Discord.RichEmbed().setDescription('You do not have manage nicknames permission!').setColor(kurisu_red))
+        message.channel.send (new Discord.RichEmbed().setDescription('You do not have manage nicknames permission!').setColor(kurisu_red)).catch (err => console.error(`COULD NOT SEND NICKNAME MESSAGE\n${err}`))
       else
-        message.channel.send (new Discord.RichEmbed().setDescription('Error: The bot may not have nickname changing permissions!').setColor(kurisu_red))
+        message.channel.send (new Discord.RichEmbed().setDescription('Error: The bot may not have nickname changing permissions!').setColor(kurisu_red)).catch (err => console.error(`COULD NOT SEND NICKNAME MESSAGE\n${err}`))
     }
 
     // Voting Reminder
     if (msg.startsWith(`${prefix}vote`)) {
-      message.channel.send (new Discord.RichEmbed ().setDescription('Sending reminders for voting for \nhttps://top.gg/bot/688388524528893955\nEvery 12 hours!'))
+      message.channel.send (new Discord.RichEmbed ().setDescription('Sending reminders for voting for \nhttps://top.gg/bot/688388524528893955\nEvery 12 hours!')).catch (console.error(`COULD NOT SEND VOTING MESSAGE\n${err}`))
 
       // For some reaosn, FS only wants to work from the root directory. Likely because its running under PM2
       fs.readFile('/home/pi/rxns/reminders.json', function (err, json_data) {
@@ -352,7 +348,7 @@ function run () {
         Object.entries(server.reactions).forEach ( reaction => {
           let reaction_count = 0;
           if (msg.includes (reaction[0]) && !recent_reactions.has (reaction[0]) && random_chance() && reaction_count <= 3) {
-            message.channel.send (reaction[1]);
+            message.channel.send (reaction[1]).catch (err => console.error (`COULD NOT SEND MESSAGE\n${err}`));
             recent_reactions.add (reaction[0]); // Adds to cooldown
             setTimeout(() => { // Removes from cooldown
               recent_reactions.delete(reaction[0])

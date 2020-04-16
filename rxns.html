@@ -266,6 +266,8 @@
     let url = document.getElementById('url').value
     let name = document.getElementById('name').value.toLowerCase();
     let data = { server: serverID, url: url, name: name }
+    if (url == "" || name == "")
+      return alert ("Cannot create a reaction with an empty reaction name or reaction!");
     console.log (data);
     $.ajax({
       url: `/rxns/${token}/add`,
