@@ -241,7 +241,7 @@ function remind () {
           client.users.get(person).send (new Discord.RichEmbed ().setDescription('Your friendly reminder to vote for me at \nhttps://top.gg/bot/688388524528893955')).catch (err => console.error(`COULD NOT SEND REMINDER MESSAGE\n${err}`));
       })
     });
-  }, 12 * 60 * 60 * 100);
+  }, 12 * 60 * 60 * 1000);
 }
 
 function run () {
@@ -343,6 +343,9 @@ function run () {
         - Only responds up to 3 reactions
         - Will have a cool-down for specific reactions of 0.5 seconds to 15.5 seconds
     */
+    if (server_reactions == null || server_reactions == undefined)
+      return;
+    
     server_reactions.forEach ( server => {
       if (server.id == message.guild.id)
         Object.entries(server.reactions).forEach ( reaction => {
@@ -364,7 +367,7 @@ function run () {
 
 // Returns a true or false if above or below 75%
 function random_chance () {
-  return Math.random () * 10 < 7.5;
+  return Math.random () * 10 < 6.5;
 }
 
 client.login(token);
